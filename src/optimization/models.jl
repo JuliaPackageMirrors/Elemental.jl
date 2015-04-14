@@ -6,7 +6,6 @@ for (elty, ext) in ((:Float32, :s),
                               (:SparseMatrix, :Matrix, "Sparse_"),
                               (:DistSparseMatrix, :DistMultiVec, "DistSparse_"))
         @eval begin
-
             function lav!(A::$matA{$elty}, b::$matb{$elty}, x::$matb{$elty})
                 err = ccall(($(string("ElLAV", sym, ext)), libEl), Cuint,
                     (Ptr{Void}, Ptr{Void}, Ptr{Void}),
@@ -41,6 +40,24 @@ for (elty, ext) in ((:Float32, :s),
         function lav{T}(A::DistSparseMatrix{T}, b::DistMultiVec{T}, ctrl::LPAffineCtrl{$elty})
             x = DistMultiVec($elty, comm(A))
             return lav!(A, b, x, ctrl)
+        end
+    end
+end
+
+for (elty, rty, ext) in ((:Float32,    :Float32, :s),
+                         (:Float64,    :Float64, :d),
+                         (:Complex64,  :Float32, :c),
+                         (:Complex128, :Float64, :z))
+    @eval begin
+        function spinvcov(A::DistMatrix{$elty}, lambda::Number)
+            lam = convert($rty, lambda)
+            Z = DistMatrix($elty)
+            niter = Ref(zero(ElInt))
+            err = ccall(($(string("ElSparseInvCov",ext)), libEl), Cuint,
+                (Ptr{Void},$rty,Ptr{Void},Ref{ElInt}),
+                A.obj, lam, Z.obj, niter)
+            err == 0 || throw(ElError(err))
+            return (Z, niter[])
         end
     end
 end

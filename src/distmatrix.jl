@@ -1,5 +1,12 @@
 type DistMatrix{T} <: ElementalMatrix{T}
 	obj::Ptr{Void}
+
+    function DistMatrix(ptr::Ptr{Void})
+        assert(ptr != C_NULL)
+        D = new(ptr)
+        finalizer(D, destroy)
+        return D
+    end
 end
 
 for (elty, ext) in ((:Float32, :s),
@@ -14,6 +21,13 @@ for (elty, ext) in ((:Float32, :s),
                 coldist, rowdist, grid.obj, obj)
             err == 0 || throw(ElError(err))
             return DistMatrix{$elty}(obj[])
+        end
+
+        function destroy(A::DistMatrix{$elty})
+            err = ccall(($(string("ElDistMatrixDestroy_", ext)), libEl), Cuint,
+                (Ptr{Void},), A.obj)
+            err == 0 || throw(ElError(err))
+            return
         end
 
         function _getindex(A::DistMatrix{$elty}, i::Integer, j::Integer)

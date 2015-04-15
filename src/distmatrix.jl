@@ -41,6 +41,35 @@ for (elty, ext) in ((:Float32, :s),
             return v[]
         end
 
+        function globalrow(A::DistMatrix{$elty}, i::Integer)
+            1 <= i <= size(A, 1) || throw(BoundsError())
+            r = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistMatrixGlobalRow_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, Ref{ElInt}),
+                A.obj, i - 1, r)
+            err == 0 || throw(ElError(err))
+            return Int(r[] + 1)
+        end
+
+        function globalcol(A::DistMatrix{$elty}, j::Integer)
+            1 <= j <= size(A, 2) || throw(BoundsError())
+            c = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistMatrixGlobalCol_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, Ref{ElInt}),
+                A.obj, j - 1, c)
+            err == 0 || throw(ElError(err))
+            return Int(c[] + 1)
+        end
+
+        function localwidth(A::DistMatrix{$elty})
+            w = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistMatrixLocalWidth_", ext)), libEl), Cuint,
+                (Ptr{Void}, Ref{ElInt}),
+                A.obj, w)
+            err == 0 || throw(ElError(err))
+            return Int(w[])
+        end
+
         function width(A::DistMatrix{$elty})
             w = Ref{ElInt}(0)
             err = ccall(($(string("ElDistMatrixWidth_", ext)), libEl), Cuint,
@@ -50,6 +79,15 @@ for (elty, ext) in ((:Float32, :s),
             return Int(w[])
         end
 
+        function localheight(A::DistMatrix{$elty})
+            h = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistMatrixLocalHeight_", ext)), libEl), Cuint,
+                (Ptr{Void}, Ref{ElInt}),
+                A.obj, h)
+            err == 0 || throw(ElError(err))
+            return Int(h[])
+        end
+
         function height(A::DistMatrix{$elty})
             h = Ref{ElInt}(0)
             err = ccall(($(string("ElDistMatrixHeight_", ext)), libEl), Cuint,
@@ -57,6 +95,16 @@ for (elty, ext) in ((:Float32, :s),
                 A.obj, h)
             err == 0 || throw(ElError(err))
             return Int(h[])
+        end
+
+        function localsetindex!(A::DistMatrix{$elty}, v::Number, i::Integer, j::Integer)
+            1 <= i <= size(A, 1) || throw(BoundsError())
+            1 <= j <= size(A, 2) || throw(BoundsError())
+            err = ccall(($(string("ElDistMatrixSetLocal_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, ElInt, $elty),
+                A.obj, i-1, j-1, v)
+            err == 0 || throw(ElError(err))
+            return A
         end
     end
 end
@@ -84,7 +132,20 @@ end
 Base.getindex(A::DistMatrix, i::Integer) = getindex(A, ind2sub(size(A), i)...)
 Base.getindex(A::DistMatrix, i::Integer, j::Integer) = _getindex(A, i-1, j-1)
 
-Base.size(A::DistMatrix) = (Int(height(A)), Int(width(A)))
+localsize(A::DistMatrix) = (localheight(A), localwidth(A))
+function localsize(A::DistMatrix, d::Integer)
+    if d < 1 || d > 2
+        throw(ArgumentError("dimension must be 1 or 2, got $d"))
+    elseif d == 1
+        return localheight(A)
+    elseif d == 2
+        return localwidth(A)
+    end
+end
+
+localsetindex!(A::DistMatrix, v::Number, i::Integer) = localsetindex!(A, v, ind2sub(A, i)...)
+
+Base.size(A::DistMatrix) = (height(A), width(A))
 function Base.size(A::DistMatrix, d::Integer)
     if d < 1
         throw(ArgumentError("dimension must be ≥ 1, got $d"))

@@ -39,3 +39,10 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
         end
     end
 end
+
+function Base.zeros{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer)
+    A = DistMatrix(T)
+    zeros!(A,m,n)
+    return A
+end
+Base.zeros{T}(::Type{DistMatrix{T}}, dim::NTuple{Integer,2}) = zeros(DistMatrix{T}, dim...)

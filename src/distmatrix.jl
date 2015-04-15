@@ -16,6 +16,17 @@ for (elty, ext) in ((:Float32, :s),
             return DistMatrix{$elty}(obj[])
         end
 
+        function _getindex(A::DistMatrix{$elty}, i::Integer, j::Integer)
+            0 <= i <= (size(A, 1) - 1) || throw(BoundsError())
+            0 <= j <= (size(A, 2) - 1) || throw(BoundsError())
+            v = Ref(zero($elty))
+            err = ccall(($(string("ElDistMatrixGet_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, ElInt, Ref{$elty}),
+                A.obj, i, j, v)
+            err == 0 || throw(ElError(err))
+            return v[]
+        end
+
         function width(A::DistMatrix{$elty})
             w = Ref{ElInt}(0)
             err = ccall(($(string("ElDistMatrixWidth_", ext)), libEl), Cuint,
@@ -35,7 +46,6 @@ for (elty, ext) in ((:Float32, :s),
         end
     end
 end
-
 DistMatrix() = DistMatrix(Float64)
 
 # This might be wrong. Should consider how to extract distributions properties of A
@@ -56,6 +66,9 @@ for (elty, ext) in ((:Float32, :s),
         end
     end
 end
+
+Base.getindex(A::DistMatrix, i::Integer) = getindex(A, ind2sub(size(A), i)...)
+Base.getindex(A::DistMatrix, i::Integer, j::Integer) = _getindex(A, i-1, j-1)
 
 Base.size(A::DistMatrix) = (Int(height(A)), Int(width(A)))
 function Base.size(A::DistMatrix, d::Integer)

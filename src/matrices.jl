@@ -46,3 +46,17 @@ function Base.zeros{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer)
     return A
 end
 Base.zeros{T}(::Type{DistMatrix{T}}, dim::NTuple{Integer,2}) = zeros(DistMatrix{T}, dim...)
+
+function uniform{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
+                    center=zero(T), radius=one(T))
+    A = DistMatrix(T)
+    uniform!(A, m, n, center, radius)
+    return A
+end
+
+function gaussian{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
+                     mean=zero(T), stdev=one(T))
+    A = DistMatrix(T)
+    gaussian!(A, m, n, mean, stdev)
+    return A
+end

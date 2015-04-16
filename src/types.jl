@@ -16,6 +16,7 @@ function ElBoolType()
 end
 const ElBool = ElBoolType()
 
+typealias ElScalarType Union(Float32,Float64,Complex64,Complex128)
 typealias ElFloatType Union(Float32,Float64)
 
 abstract ElementalMatrix{T} <: AbstractMatrix{T}
@@ -28,6 +29,16 @@ const EL_VR			= Cint(4)
 const EL_STAR		= Cint(5)
 const EL_CIRC		= Cint(6)
 
-const EL_NORMAL 	= Cint(0)
-const EL_TRANSPOSE 	= Cint(1)
-const EL_ADJOINT 	= Cint(2)
+@enum(ElOrientation,
+      NORMAL    = Cuint(0),
+      TRANSPOSE = Cuint(1),
+      ADJOINT   = Cuint(2))
+
+@enum(ElSortType,
+      UNSORTED   = Cuint(0),
+      DESCENDING = Cuint(1),
+      ASCENDING  = Cuint(2))
+
+@enum(ElUpperOrLower,
+      LOWER = Cuint(0),
+      UPPER = Cuint(1))

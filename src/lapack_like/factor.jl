@@ -14,14 +14,14 @@ immutable RegQSDCtrl{T<:ElFloatType}
     progress::ElBool
 end
 function RegQSDCtrl{T<:ElFloatType}(::Type{T};
-                    regPrimal=eps(T)^convert(T, 0.5),
-                    regDual=eps(T)^convert(T, 0.5),
-                    alg=EL_REG_REFINE_FGMRES,
-                    relTol=eps(T)^convert(T, 0.5),
-                    relTolRefine=eps(T)^convert(T, 0.5),
-                    maxRefineIts=50,
-                    restart=10,
-                    progress::Bool=false)
+                                    regPrimal=eps(T)^T(0.5),
+                                    regDual=eps(T)^T(0.5),
+                                    alg=EL_REG_REFINE_FGMRES,
+                                    relTol=eps(T)^T(0.5),
+                                    relTolRefine=eps(T)^T(0.5),
+                                    maxRefineIts=50,
+                                    restart=10,
+                                    progress::Bool=false)
     RegQSDCtrl{T}(regPrimal, regDual, alg,
                   relTol, relTolRefine,
                   maxRefineIts, restart,

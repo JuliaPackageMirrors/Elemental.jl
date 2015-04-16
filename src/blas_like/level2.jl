@@ -5,10 +5,14 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
     for (mat, sym) in ((:Matrix, "_"),
                        (:DistMatrix, "Dist_"))
         @eval begin
-            function A_mul_B!(α::$elty, A::$mat{$elty}, x::$mat{$elty}, β::$elty, y::$mat{$elty})
+            function A_mul_B!(α::$elty,
+                              A::$mat{$elty},
+                              x::$mat{$elty},
+                              β::$elty,
+                              y::$mat{$elty})
                 err = ccall(($(string("ElGemv", sym, ext)), libEl), Cuint,
                 	(Cint, $elty, Ptr{Void}, Ptr{Void}, $elty, Ptr{Void}),
-                	EL_NORMAL, α, A.obj, x.obj, β, y.obj)
+                    NORMAL, α, A.obj, x.obj, β, y.obj)
                 err == 0 || throw(ElError(err))
             	return y
             end

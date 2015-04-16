@@ -24,20 +24,20 @@ for (elty, ext) in ((:Float32, :s),
         end
     end
     @eval begin
-        function lav{T}(A::Matrix{T}, b::Matrix{T})
+        function lav(A::Matrix{$elty}, b::Matrix{$elty})
             x = Matrix($elty)
             return lav!(A, b, x)
         end
-        function lav{T}(A::DistMatrix{T}, b::DistMatrix{T})
+        function lav(A::DistMatrix{$elty}, b::DistMatrix{$elty})
             x = DistMatrix($elty, EL_MC, EL_MR, Grid(A))
             return lav!(A, b, x)
         end
-        function lav{T}(A::DistSparseMatrix{T}, b::DistMultiVec{T})
+        function lav(A::DistSparseMatrix{$elty}, b::DistMultiVec{$elty})
             x = DistMultiVec($elty, comm(A))
             return lav!(A, b, x)
         end
 
-        function lav{T}(A::DistSparseMatrix{T}, b::DistMultiVec{T}, ctrl::LPAffineCtrl{$elty})
+        function lav(A::DistSparseMatrix{$elty}, b::DistMultiVec{$elty}, ctrl::LPAffineCtrl{$elty})
             x = DistMultiVec($elty, comm(A))
             return lav!(A, b, x, ctrl)
         end
@@ -57,7 +57,7 @@ for (elty, rty, ext) in ((:Float32,    :Float32, :s),
                 (Ptr{Void},$rty,Ptr{Void},Ref{ElInt}),
                 A.obj, lam, Z.obj, niter)
             err == 0 || throw(ElError(err))
-            return (Z, niter[])
+            return (Z, Int(niter[]))
         end
     end
 end

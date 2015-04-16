@@ -40,23 +40,21 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
     end
 end
 
-function Base.zeros{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer)
+function Base.zeros{T<:ElScalarType}(::Type{DistMatrix{T}}, m::Integer, n::Integer)
     A = DistMatrix(T)
-    zeros!(A,m,n)
-    return A
+    return zeros!(A,m,n)
 end
-Base.zeros{T}(::Type{DistMatrix{T}}, dim::NTuple{Integer,2}) = zeros(DistMatrix{T}, dim...)
+Base.zeros{T<:ElScalarType}(::Type{DistMatrix{T}}, dim::NTuple{Integer,2}) =
+    zeros(DistMatrix{T}, dim...)
 
-function uniform{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
-                    center=zero(T), radius=one(T))
+function uniform{T<:ElScalarType}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
+                                  center=zero(T), radius=one(T))
     A = DistMatrix(T)
-    uniform!(A, m, n, center, radius)
-    return A
+    return uniform!(A, m, n, center, radius)
 end
 
-function gaussian{T}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
-                     mean=zero(T), stdev=one(T))
+function gaussian{T<:ElScalarType}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
+                                   mean=zero(T), stdev=one(T))
     A = DistMatrix(T)
-    gaussian!(A, m, n, mean, stdev)
-    return A
+    return gaussian!(A, m, n, mean, stdev)
 end

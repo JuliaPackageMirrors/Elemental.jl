@@ -14,7 +14,10 @@ for (elty, ext) in ((:Float32, :s),
                     (:Complex64, :c),
                     (:Complex128, :z))
     @eval begin
-        function DistMatrix(::Type{$elty}, coldist=EL_MC, rowdist=EL_MR, grid=Grid())
+        function DistMatrix(::Type{$elty},
+                            coldist::ElDist=MC,
+                            rowdist::ElDist=MR,
+                            grid=Grid())
             obj = Ref{Ptr{Void}}(C_NULL)
             err = ccall(($(string("ElDistMatrixCreateSpecific_", ext)), libEl), Cuint,
                 (Cint, Cint, Ptr{Void}, Ref{Ptr{Void}}),

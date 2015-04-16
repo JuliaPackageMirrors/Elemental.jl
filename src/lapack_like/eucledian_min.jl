@@ -22,7 +22,7 @@ end
 function leastSquares{T<:ElFloatType}(A::DistMatrix{T},
                                       B::DistMatrix{T};
                                       orientation::ElOrientation=NORMAL)
-    X = DistMatrix(T, EL_MC, EL_MR, Grid(A))
+    X = DistMatrix(T, MC, MR, Grid(A))
     return leastSquares!(A, B, X, orientation=orientation)
 end
 

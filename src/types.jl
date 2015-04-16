@@ -1,9 +1,9 @@
 # Detect Elemental integer size
 function ElIntType()
-    using64 = Cint[0]
-    err = ccall((:ElUsing64BitInt, libEl), Cuint, (Ptr{Cint},), using64)
+    using64 = Ref(zero(Cint))
+    err = ccall((:ElUsing64BitInt, libEl), Cuint, (Ref{Cint},), using64)
     err == 0 || throw(ElError(err))
-    return using64[1] == 1 ? Int64 : Int32
+    return using64[] == 1 ? Int64 : Int32
 end
 const ElInt = ElIntType()
 
@@ -17,17 +17,21 @@ end
 const ElBool = ElBoolType()
 
 typealias ElScalarType Union(Float32,Float64,Complex64,Complex128)
+
+typealias ElComplexType Union(Complex64,Complex128)
+
 typealias ElFloatType Union(Float32,Float64)
 
 abstract ElementalMatrix{T} <: AbstractMatrix{T}
 
-const EL_MC			= Cint(0)
-const EL_MD			= Cint(1)
-const EL_MR			= Cint(2)
-const EL_VC			= Cint(3)
-const EL_VR			= Cint(4)
-const EL_STAR		= Cint(5)
-const EL_CIRC		= Cint(6)
+@enum(ElDist,
+      MC = Cint(0),
+      MD = Cint(1),
+      MR = Cint(2),
+      VC = Cint(3),
+      VR = Cint(4),
+      STAR = Cint(5),
+      CIRC = Cint(6))
 
 @enum(ElOrientation,
       NORMAL    = Cuint(0),

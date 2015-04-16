@@ -29,7 +29,7 @@ for (elty, ext) in ((:Float32, :s),
             return lav!(A, b, x)
         end
         function lav(A::DistMatrix{$elty}, b::DistMatrix{$elty})
-            x = DistMatrix($elty, EL_MC, EL_MR, Grid(A))
+            x = DistMatrix($elty, MC, MR, Grid(A))
             return lav!(A, b, x)
         end
         function lav(A::DistSparseMatrix{$elty}, b::DistMultiVec{$elty})

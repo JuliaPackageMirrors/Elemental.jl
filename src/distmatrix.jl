@@ -33,6 +33,24 @@ for (elty, ext) in ((:Float32, :s),
             return
         end
 
+        function locked(A::DistMatrix{$elty})
+            r = Ref(zero(ElBool))
+            err = ccall(($(string("ElDistMatrixLocked_", ext)), libEl), Cuint,
+                (Ptr{Void}, Ref{ElBool}),
+                A.obj, r)
+            err == 0 || throw(ElError(err))
+            return r[] == 1
+        end
+
+        function viewing(A::DistMatrix{$elty})
+            r = Ref(zero(ElBool))
+            err = ccall(($(string("ElDistMatrixViewing_", ext)), libEl), Cuint,
+                (Ptr{Void}, Ref{ElBool}),
+                A.obj, r)
+            err == 0 || throw(ElError(err))
+            return r[] == 1
+        end
+
         function _getindex(A::DistMatrix{$elty}, i::Integer, j::Integer)
             1 <= i <= size(A, 1) || throw(BoundsError())
             1 <= j <= size(A, 2) || throw(BoundsError())
@@ -108,6 +126,15 @@ for (elty, ext) in ((:Float32, :s),
                 A.obj, h)
             err == 0 || throw(ElError(err))
             return Int(h[])
+        end
+
+        function diaglength(A::DistMatrix{$elty})
+            l = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistMatrixDiagonalLength_", ext)), libEl), Cuint,
+                (Ptr{Void}, Ref{ElInt}),
+                A.obj, l)
+            err == 0 || throw(ElError(err))
+            return Int(l[])
         end
 
         function localsetindex!(A::DistMatrix{$elty}, v::Number, i::Integer, j::Integer)

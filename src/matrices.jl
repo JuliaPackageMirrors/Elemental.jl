@@ -40,20 +40,20 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
     end
 end
 
-function Base.zeros{T<:ElScalarType}(::Type{DistMatrix{T}}, m::Integer, n::Integer)
+function Base.zeros{T<:ElFieldType}(::Type{DistMatrix{T}}, m::Integer, n::Integer)
     A = DistMatrix(T)
     return zeros!(A,m,n)
 end
-Base.zeros{T<:ElScalarType}(::Type{DistMatrix{T}}, dim::NTuple{Integer,2}) =
+Base.zeros{T<:ElFieldType}(::Type{DistMatrix{T}}, dim::NTuple{Integer,2}) =
     zeros(DistMatrix{T}, dim...)
 
-function uniform{T<:ElScalarType}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
+function uniform{T<:ElFieldType}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
                                   center=zero(T), radius=one(T))
     A = DistMatrix(T)
     return uniform!(A, m, n, center, radius)
 end
 
-function gaussian{T<:ElScalarType}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
+function gaussian{T<:ElFieldType}(::Type{DistMatrix{T}}, m::Integer, n::Integer,
                                    mean=zero(T), stdev=one(T))
     A = DistMatrix(T)
     return gaussian!(A, m, n, mean, stdev)

@@ -16,7 +16,7 @@ function ElBoolType()
 end
 const ElBool = ElBoolType()
 
-typealias ElScalarType Union(Float32,Float64,Complex64,Complex128)
+typealias ElFieldType Union(Float32,Float64,Complex64,Complex128)
 
 typealias ElComplexType Union(Complex64,Complex128)
 

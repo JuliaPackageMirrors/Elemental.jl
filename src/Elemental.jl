@@ -49,6 +49,7 @@ include("blas_like/level3.jl")
 include("lapack_like/eucledian_min.jl")
 include("lapack_like/factor.jl")
 include("lapack_like/props.jl")
+include("lapack_like/spectral.jl")
 include("optimization/solvers.jl")
 include("optimization/models.jl")
 

@@ -34,14 +34,24 @@ for (elty, ext) in ((:Float32, :s),
         end
 
         function _getindex(A::DistMatrix{$elty}, i::Integer, j::Integer)
-            0 <= i <= (size(A, 1) - 1) || throw(BoundsError())
-            0 <= j <= (size(A, 2) - 1) || throw(BoundsError())
+            1 <= i <= size(A, 1) || throw(BoundsError())
+            1 <= j <= size(A, 2) || throw(BoundsError())
             v = Ref(zero($elty))
             err = ccall(($(string("ElDistMatrixGet_", ext)), libEl), Cuint,
                 (Ptr{Void}, ElInt, ElInt, Ref{$elty}),
-                A.obj, i, j, v)
+                A.obj, i-1 , j-1, v)
             err == 0 || throw(ElError(err))
             return v[]
+        end
+
+        function _setindex!(A::DistMatrix{$elty}, v, i::Integer, j::Integer)
+            1 <= i <= size(A, 1) || throw(BoundsError())
+            1 <= j <= size(A, 2) || throw(BoundsError())
+            err = ccall(($(string("ElDistMatrixSet_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, ElInt, $elty),
+                A.obj, i-1, j-1, v)
+            err == 0 || throw(ElError(err))
+            return A
         end
 
         function globalrow(A::DistMatrix{$elty}, i::Integer)
@@ -49,7 +59,7 @@ for (elty, ext) in ((:Float32, :s),
             r = Ref{ElInt}(0)
             err = ccall(($(string("ElDistMatrixGlobalRow_", ext)), libEl), Cuint,
                 (Ptr{Void}, ElInt, Ref{ElInt}),
-                A.obj, i - 1, r)
+                A.obj, i-1, r)
             err == 0 || throw(ElError(err))
             return Int(r[] + 1)
         end
@@ -59,7 +69,7 @@ for (elty, ext) in ((:Float32, :s),
             c = Ref{ElInt}(0)
             err = ccall(($(string("ElDistMatrixGlobalCol_", ext)), libEl), Cuint,
                 (Ptr{Void}, ElInt, Ref{ElInt}),
-                A.obj, j - 1, c)
+                A.obj, j-1, c)
             err == 0 || throw(ElError(err))
             return Int(c[] + 1)
         end
@@ -133,7 +143,10 @@ for (elty, ext) in ((:Float32, :s),
 end
 
 Base.getindex(A::DistMatrix, i::Integer) = getindex(A, ind2sub(size(A), i)...)
-Base.getindex(A::DistMatrix, i::Integer, j::Integer) = _getindex(A, i-1, j-1)
+Base.getindex(A::DistMatrix, i::Integer, j::Integer) = _getindex(A, i, j)
+
+Base.setindex!(A::DistMatrix, v, i::Integer) = setindex!(A, v, ind2sub(size(A), i)...)
+Base.setindex!(A::DistMatrix, v, i::Integer, j::Integer) = _setindex!(A, v, i, j)
 
 localsize(A::DistMatrix) = (localheight(A), localwidth(A))
 function localsize(A::DistMatrix, d::Integer)

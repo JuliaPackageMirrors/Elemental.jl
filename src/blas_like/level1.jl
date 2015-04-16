@@ -14,13 +14,7 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
                 err == 0 || throw(ElError(err))
                 return nm[]
             end
-        end
-    end
 
-    for (mat, sym) in ((:Matrix, "_"),
-                       (:DistMatrix, "Dist_"),
-                       (:DistMultiVec, "DistMultiVec_"))
-        @eval begin
             function copy!(src::$mat{$elty}, dest::$mat{$elty})
                 err = ccall(($(string("ElCopy", sym, ext)), libEl), Cuint,
                     (Ptr{Void}, Ptr{Void}),
@@ -32,3 +26,44 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
     end
 end
 copy(A::ElementalMatrix) = copy!(A, similar(A))
+
+
+for (mat, sym) in ((:DistMatrix, "Dist_"),)
+
+    for (elty, ext) in ((:Complex64, :c),
+                        (:Complex128, :z))
+        @eval begin
+            function makeSymmetric!(uplo::ElUpperOrLower, A::$mat{$elty}, conj=false)
+                conj && return MakeHermitian!(uplo, A)
+                err = ccall(($(string("ElMakeSymmetric", sym, ext)), libEl), Cuint,
+                    (Cuint, Ptr{Void}),
+                    uplo, A.obj)
+                err == 0 || throw(ElError(err))
+                return A
+            end
+
+            function makeHermitian!(uplo::ElUpperOrLower, A::$mat{$elty})
+                err = ccall(($(string("ElMakeHermitian", sym, ext)), libEl), Cuint,
+                    (Cuint, Ptr{Void}),
+                    uplo, A.obj)
+                err == 0 || throw(ElError(err))
+                return A
+            end
+        end
+    end
+
+    for (elty, ext) in ((:Float32, :s),
+                        (:Float64, :d))
+        @eval begin
+            function makeSymmetric!(uplo::ElUpperOrLower, A::$mat{$elty}, conj=false)
+                err = ccall(($(string("ElMakeSymmetric", sym, ext)), libEl), Cuint,
+                    (Cuint, Ptr{Void}),
+                    uplo, A.obj)
+                err == 0 || throw(ElError(err))
+                return A
+            end
+            makeHermitian!(uplo::ElUpperOrLower, A::$mat{$elty}) =
+                makeSymmetric!(uplo, A)
+        end
+    end
+end

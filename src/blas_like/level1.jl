@@ -20,7 +20,15 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
                     (Ptr{Void}, Ptr{Void}),
                     src.obj, dest.obj)
                 err == 0 || throw(ELError(err))
-                dest
+                return dest
+            end
+
+            function shiftDiagonal!(A::DistMatrix{$elty}, α, off)
+                err = ccall(($(string("ElShiftDiagonal", sym, ext)), libEl), Cuint,
+                    (Ptr{Void}, $elty, ElInt),
+                    A.obj, α, off)
+                err == 0 || throw(ElError(err))
+                return A
             end
         end
     end
@@ -89,10 +97,8 @@ for (mat, sym) in ((:DistMatrix, "Dist_"),)
                 err == 0 || throw(ElError(err))
                 return v[]
             end
-
         end
     end
-
 end
 Base.minimum(A::DistMatrix) = (v = _minimum(A); v.value)
 Base.findmin(A::DistMatrix) = (v = _minimum(A); (v.value, sub2ind(size(A), v.i+1, v.j+1)))

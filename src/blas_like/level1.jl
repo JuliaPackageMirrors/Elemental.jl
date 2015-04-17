@@ -23,7 +23,7 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
                 return dest
             end
 
-            function shiftDiagonal!(A::DistMatrix{$elty}, α, off)
+            function shiftDiagonal!(A::DistMatrix{$elty}, α, off::Integer=0)
                 err = ccall(($(string("ElShiftDiagonal", sym, ext)), libEl), Cuint,
                     (Ptr{Void}, $elty, ElInt),
                     A.obj, α, off)

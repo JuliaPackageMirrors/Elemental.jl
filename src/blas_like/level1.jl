@@ -66,4 +66,36 @@ for (mat, sym) in ((:DistMatrix, "Dist_"),)
                 makeSymmetric!(uplo, A)
         end
     end
+
+    for (elty, ext) in ((:Float32, :s),
+                        (:Float64, :d),
+                        (:Complex64, :c),
+                        (:Complex128, :z))
+        @eval begin
+            function _minimum(A::DistMatrix{$elty})
+                v = Ref{ElEntry{$elty}}(zero(ElEntry{$elty}))
+                err = ccall(($(string("ElMin", sym, ext)), libEl), Cuint,
+                    (Ptr{Void}, Ref{ElEntry{$elty}}),
+                    A.obj, v)
+                err == 0 || throw(ElError(err))
+                return v[]
+            end
+
+            function _maximum(A::DistMatrix{$elty})
+                v = Ref{ElEntry{$elty}}(zero(ElEntry{$elty}))
+                err = ccall(($(string("ElMax", sym, ext)), libEl), Cuint,
+                    (Ptr{Void}, Ref{ElEntry{$elty}}),
+                    A.obj, v)
+                err == 0 || throw(ElError(err))
+                return v[]
+            end
+
+        end
+    end
+
 end
+Base.minimum(A::DistMatrix) = (v = _minimum(A); v.value)
+Base.findmin(A::DistMatrix) = (v = _minimum(A); (v.value, sub2ind(size(A), v.i+1, v.j+1)))
+
+Base.maximum(A::DistMatrix) = (v = _maximum(A); v.value)
+Base.findmax(A::DistMatrix) = (v = _maximum(A); (v.value, sub2ind(size(A), v.i+1, v.j+1)))

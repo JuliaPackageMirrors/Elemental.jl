@@ -24,6 +24,14 @@ typealias ElFloatType Union(Float32,Float64)
 
 abstract ElementalMatrix{T} <: AbstractMatrix{T}
 
+immutable ElEntry{T<:ElFieldType}
+    i::ElInt
+    j::ElInt
+    value::T
+end
+Base.zero{T<:ElFieldType}(::Type{ElEntry{T}}) =
+    ElEntry{T}(zero(ElInt), zero(ElInt), zero(T))
+
 @enum(ElDist,
       MC = Cint(0),
       MD = Cint(1),
@@ -34,15 +42,15 @@ abstract ElementalMatrix{T} <: AbstractMatrix{T}
       CIRC = Cint(6))
 
 @enum(ElOrientation,
-      NORMAL    = Cuint(0),
-      TRANSPOSE = Cuint(1),
-      ADJOINT   = Cuint(2))
+      NORMAL    = Cint(0),
+      TRANSPOSE = Cint(1),
+      ADJOINT   = Cint(2))
 
 @enum(ElSortType,
-      UNSORTED   = Cuint(0),
-      DESCENDING = Cuint(1),
-      ASCENDING  = Cuint(2))
+      UNSORTED   = Cint(0),
+      DESCENDING = Cint(1),
+      ASCENDING  = Cint(2))
 
 @enum(ElUpperOrLower,
-      LOWER = Cuint(0),
-      UPPER = Cuint(1))
+      LOWER = Cint(0),
+      UPPER = Cint(1))

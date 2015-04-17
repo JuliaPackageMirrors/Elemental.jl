@@ -1,5 +1,4 @@
 # Hermitian and tridiagonal eigensolvers
-
 immutable HermitianEigSubset{T<:ElFloatType}
     indexSubset::ElBool
     lowerIndex::ElInt
@@ -15,13 +14,23 @@ for (elty, ext) in ((:Float32, :s),
                     (:Complex128, :z))
     @eval begin
         function hermitianEig(uplo::ElUpperOrLower,
-                              A::DistMatrix{$elty})
-            sort::ElSortType=ASCENDING
+                              A::DistMatrix{$elty},
+                              w::DistMatrix{$elty};
+                              sort::ElSortType=ASCENDING)
+            err = ccall(($(string("ElHermitianEigDist_", ext)), libEl), Cuint,
+                        (Cuint, Ptr{Void}, Ptr{Void}, Cuint),
+                        uplo, A.obj, w.obj, sort)
+            err == 0 || throw(ElError(err))
+            return w
+        end
+
+        function hermitianEig(uplo::ElUpperOrLower, A::DistMatrix{$elty},
+                              sort::ElSortType=ASCENDING)
             w = DistMatrix($elty, STAR, STAR, Grid(A))
             X = DistMatrix($elty, MC, MR, Grid(A))
-            err = ccall(($(string("ElHermitianEigPairDist", ext)), libEl),
-                    (Cuint, Ptr{Void}, Ptr{Void}, Ptr{Void}, Cuint),
-                    uplo, A.obj, w.obj, X.obj, sort)
+            err = ccall(($(string("ElHermitianEigPairDist_", ext)), libEl), Cuint,
+                        (Cuint, Ptr{Void}, Ptr{Void}, Ptr{Void}, Cuint),
+                        uplo, A.obj, w.obj, X.obj, sort)
             err == 0 || throw(ElError(err))
             return w
         end

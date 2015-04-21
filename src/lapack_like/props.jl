@@ -8,31 +8,34 @@ for (elty, relty, ext) in ((:Float32, :Float32, :s),
                        (:DistSparseMatrix, "DistSparse_"),
                        (:DistMultiVec, "DistMultiVec_"))
         @eval begin
-            function maxNorm(x::$mat{$elty})
-                nm = Ref{$relty}(0)
+            function maxNorm(A::$mat{$elty})
+                v = Ref{$relty}(0)
                 err = ccall(($(string("ElMaxNorm", sym, ext)), libEl), Cuint,
                     (Ptr{Void}, Ref{$relty}),
-                    x.obj, nm)
+                    A.obj, v)
                 err == 0 || throw(ElError(err))
-                return nm[]
+                return v[]
             end
-        end
-    end
 
-    for (mat, sym) in ((:Matrix, "_"),
-                       (:DistMatrix, "Dist_"),
-                       (:SparseMatrix, "Sparse_"),
-                       (:DistSparseMatrix, "DistSparse_"),
-                       (:DistMultiVec, "DistMultiVec_"))
-        @eval begin
-            function entrywiseNorm(x::$mat{$elty}, p::Real)
-                nm = Ref{$relty}(0)
+            function entrywiseNorm(A::$mat{$elty}, p::Real)
+                v = Ref{$relty}(0)
                 err = ccall(($(string("ElEntrywiseNorm", sym, ext)), libEl), Cuint,
                     (Ptr{Void}, $relty, Ref{$relty}),
-                    x.obj, p, nm)
+                    A.obj, p, v)
                 err == 0 || throw(ElError(err))
-                return nm[]
+                return v[]
+            end
+
+            function frobeniusNorm(A::$mat{$elty})
+                v = Ref{$relty}(0)
+                err = ccall(($(string("ElFrobeniusNorm", sym, ext)), libEl), Cuint,
+                    (Ptr{Void}, Ref{$relty}),
+                    A.obj, v)
+                err == 0 || throw(ElError(err))
+                return v[]
             end
         end
     end
 end
+
+Base.vecnorm(A::ElementalMatrix) = frobeniusNorm(A)

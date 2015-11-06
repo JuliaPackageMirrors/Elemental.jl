@@ -14,8 +14,8 @@ function toback{T<:BlasFloat,S<:StridedMatrix}(A::DArray{T,2,S})
             zeros!(AlA, size(A)...)
             for j = 1:size(lA,2), i = 1:size(lA, 1)
                 queueUpdate(AlA,
-                            start(ind[1]) + i - 1,
-                            start(ind[2]) + j - 1, lA[i,j])
+                    start(ind[1]) + i - 1,
+                    start(ind[2]) + j - 1, lA[i,j])
             end
             processQueues(AlA)
             AlA
@@ -24,6 +24,36 @@ function toback{T<:BlasFloat,S<:StridedMatrix}(A::DArray{T,2,S})
     return rs
 end
 
+function toback{T<:BlasFloat,S<:SparseMatrixCSC}(A::DArray{T,2,S})
+    rs = Array(Any, size(A.chunks))
+    @sync for p in eachindex(A.chunks)
+        ind = A.indexes[p]
+        @async rs[p] = remotecall(A.pids[p]) do
+            lA = localpart(A)
+            cp = lA.colptr
+            rv = lA.rowval
+            vals = lA.nzval
+            AlA = Elemental.DistSparseMatrix(T)
+            resize!(AlA, size(A)...)
+            nn = MPI.allreduce(Cint(nnz(lA)), +, CommWorld)
+            reserve(AlA, nn)
+            for j = 1:size(lA,2)
+                for ip = cp[j]:cp[j + 1] - 1
+                    queueUpdate(AlA,
+                        start(ind[1]) + rv[ip] - 1,
+                        start(ind[2]) + j - 1,
+                        vals[ip],
+                        false)
+                end
+            end
+            processQueues(AlA)
+            AlA
+        end
+    end
+    return rs
+end
+
+# This is really a hack. Maybe we should introduce a type for storing the references to Elemental matrices. The problem is that, in general, we cannot know the return types of the functions that work on Elemental matrices.
 function tofront(r::Base.Matrix)
     tt = Array(Any, length(r))
     for i = 1:length(r)
@@ -33,7 +63,7 @@ function tofront(r::Base.Matrix)
     end
 
     rType = fetch(tt[1])
-    if rType <: ElementalMatrix
+    if rType <: DistMatrix
         for i = 1:length(r)
             tt[i] = remotecall(r[i].where, r[i]) do t
                 v = fetch(t)

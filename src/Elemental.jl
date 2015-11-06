@@ -5,7 +5,7 @@ using DistributedArrays
 
 import Base: *, \, Ac_mul_B
 import Base: convert, copy, copy!, countnz, dot, eltype, fill!, getindex, hcat, inv, length,
-    logdet, pointer, print, setindex!, showarray, similar, size
+    logdet, nnz, pointer, print, setindex!, showarray, similar, size
 import Base.LinAlg: A_mul_B!, Ac_mul_B!, axpy!, norm, scale!, svd, svdvals, svdvals!
 
 const libEl = abspath(joinpath(dirname(@__FILE__), "..", "deps", "usr", "lib", "libEl"))

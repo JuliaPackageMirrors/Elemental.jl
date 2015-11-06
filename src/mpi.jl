@@ -1,5 +1,6 @@
 module MPI
 
+import Base: rank, size
 using Elemental: ElComm, ElElementType, ElInt, CommWorld, libEl
 
 function __init__()
@@ -49,13 +50,17 @@ end
 
 function MPIOp(f::Function)
     if MPIImpl == :OpenMPI
-        if f == (+)
+        if f == max
+            return Libdl.dlsym_e(Libdl.dlopen(libEl), :ompi_mpi_op_max)
+        elseif f == (+)
             return Libdl.dlsym_e(Libdl.dlopen(libEl), :ompi_mpi_op_sum)
         else
             error("operation not defined yet")
         end
     elseif MPIImpl == :MPICH2 || MPIImpl == :MPICH3
-        if f == (+)
+        if f == max
+            return Cint(0x58000001)
+        elseif f == (+)
             return Cint(0x58000003)
         else
             error("operation not defined yet")
@@ -65,9 +70,18 @@ function MPIOp(f::Function)
     end
 end
 
-function commRank(comm::ElComm)
+function rank(comm::ElComm)
     n = Ref{Cint}()
     err = ccall((:MPI_Comm_rank, libEl), Cint, (ElComm, Ref{Cint}), comm, n)
+    if err != 0
+        error("error value was $err")
+    end
+    return n[]
+end
+
+function size(comm::ElComm)
+    n = Ref{Cint}()
+    err = ccall((:MPI_Comm_size, libEl), Cint, (ElComm, Ref{Cint}), comm, n)
     if err != 0
         error("error value was $err")
     end

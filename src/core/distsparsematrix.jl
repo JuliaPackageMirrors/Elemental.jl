@@ -17,6 +17,15 @@ for (elty, ext) in ((:ElInt, :i),
             return DistSparseMatrix{$elty}(obj[])
         end
 
+        function col(A::DistSparseMatrix{$elty}, i::Integer)
+            v = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistSparseMatrixCol_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, Ref{ElInt}),
+                A.obj, i - 1, v)
+            err == 0 || throw(ElError(err))
+            return v[] + 1
+        end
+
         function comm(A::DistSparseMatrix{$elty})
             cm = Ref{ElComm}()
             err = ccall(($(string("ElDistSparseMatrixComm_", ext)), libEl), Cuint,
@@ -38,9 +47,9 @@ for (elty, ext) in ((:ElInt, :i),
             i = Ref{ElInt}(0)
             err = ccall(($(string("ElDistSparseMatrixGlobalRow_", ext)), libEl), Cuint,
                 (Ptr{Void}, ElInt, Ref{ElInt}),
-                A.obj, iLoc-1, i)
+                A.obj, iLoc - 1, i)
             err == 0 || throw(ElError(err))
-            return i[]+1
+            return i[] + 1
         end
 
         function height(A::DistSparseMatrix{$elty})
@@ -81,7 +90,7 @@ for (elty, ext) in ((:ElInt, :i),
         function queueLocalUpdate(A::DistSparseMatrix{$elty}, localRow::Integer, col::Integer, value::$elty)
             err = ccall(($(string("ElDistSparseMatrixQueueLocalUpdate_", ext)), libEl), Cuint,
                 (Ptr{Void}, ElInt, ElInt, $elty),
-                A.obj, localRow-1, col-1, value)
+                A.obj, localRow - 1, col - 1, value)
             err == 0 || throw(ElError(err))
             return nothing
         end
@@ -89,7 +98,7 @@ for (elty, ext) in ((:ElInt, :i),
         function queueUpdate(A::DistSparseMatrix{$elty}, row::Integer, col::Integer, value::$elty, passive::Bool = true)
             err = ccall(($(string("ElDistSparseMatrixQueueUpdate_", ext)), libEl), Cuint,
                 (Ptr{Void}, ElInt, ElInt, $elty, Bool),
-                A.obj, row-1, col-1, value, passive)
+                A.obj, row - 1, col - 1, value, passive)
             err == 0 || error("something is wrong here!")
             return nothing
         end
@@ -108,6 +117,24 @@ for (elty, ext) in ((:ElInt, :i),
                 A.obj, height, width)
             err == 0 || throw(ElError(err))
             return A
+        end
+
+        function row(A::DistSparseMatrix{$elty}, i::Integer)
+            v = Ref{ElInt}(0)
+            err = ccall(($(string("ElDistSparseMatrixRow_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, Ref{ElInt}),
+                A.obj, i - 1, v)
+            err == 0 || throw(ElError(err))
+            return v[] + 1
+        end
+
+        function value(A::DistSparseMatrix{$elty}, i::Integer)
+            v = Ref{$elty}(0)
+            err = ccall(($(string("ElDistSparseMatrixValue_", ext)), libEl), Cuint,
+                (Ptr{Void}, ElInt, Ref{$elty}),
+                A.obj, i - 1, v)
+            err == 0 || throw(ElError(err))
+            return v[]
         end
 
         function width(A::DistSparseMatrix{$elty})
@@ -130,7 +157,10 @@ end
 
 # Julia convenience
 
-countnz(A::DistSparseMatrix) = MPI.allreduce(Cint(numLocalEntries(A)), +, comm(A))
+nnz(A::DistSparseMatrix) = MPI.allreduce(Cint(numLocalEntries(A)), +, comm(A))
+# This is cheating, but it probably doesn't matter much
+countnz(A::DistSparseMatrix) = nnz(A)
+
 
 function showarray(io::IO, A::DistSparseMatrix; kwargs...)
     print(io, "$(size(A, 1))x$(size(A, 2)) $(typeof(A))")

@@ -46,7 +46,7 @@ svdvals(A::ElementalMatrix, ctrl::SVDCtrl) = svdvals!(copy(A), ctrl)
 # function copy!{T}(dest::DistMatrix{T}, src::Base.VecOrMat)
 #     m, n = size(src, 1), size(src, 2)
 #     zeros!(dest, m, n)
-#     if MPI.commRank(comm(B)) == 0
+#     if MPI.rank(comm(B)) == 0
 #         for j = 1:n
 #             for i = 1:m
 #                 queueUpdate(dest, i, j, src[i,j])
@@ -75,7 +75,7 @@ function convert{T}(::Type{DistMatrix{T}}, A::Base.VecOrMat{T})
     m, n = size(A, 1), size(A, 2)
     B = DistMatrix(T)
     zeros!(B, m, n)
-    if MPI.commRank(comm(B)) == 0
+    if MPI.rank(comm(B)) == 0
         for j = 1:n
             for i = 1:m
                 queueUpdate(B, i, j, A[i,j])
@@ -90,7 +90,7 @@ function convert{T}(::Type{DistMultiVec{T}}, A::Base.VecOrMat{T})
     m, n = size(A, 1), size(A, 2)
     B = DistMultiVec(T)
     zeros!(B, m, n)
-    if MPI.commRank(comm(B)) == 0
+    if MPI.rank(comm(B)) == 0
         for j = 1:n
             for i = 1:m
                 queueUpdate(B, i, j, A[i,j])

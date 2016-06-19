@@ -13,7 +13,7 @@ function __init__()
         versionBuffer = Array(UInt8, 1000)
         len = Cint[0]
         err = ccall((:MPI_Get_library_version, libEl), Cint, (Ptr{UInt8}, Ptr{Cint}), versionBuffer, len)
-        versionString = bytestring(versionBuffer[1:len[1]])
+        versionString = String(versionBuffer[1:len[1]])
         if ismatch(r"Open MPI", versionString)
             const global MPIImpl = :OpenMPI
         elseif ismatch(r"MPICH", versionString)

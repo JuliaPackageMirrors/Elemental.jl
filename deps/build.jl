@@ -19,7 +19,11 @@ if !isdir(joinpath(depdir, "usr"))
 end
 prefix = joinpath(depdir, "usr")
 
-if !isdir(srcdir)
+if isdir(srcdir)
+    cd(srcdir) do
+        Git.run(`fetch`)
+    end
+else
     Git.run(`clone -- https://github.com/elemental/Elemental.git $srcdir`)
 end
 cd(srcdir) do
